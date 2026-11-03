@@ -1,0 +1,34 @@
+{
+  "name": "longscroll",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "homepage": "https://severus24.github.io/longscroll/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/severus24/longscroll.git"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"npm:server\" \"npm:vite\"",
+    "server": "node server/index.js",
+    "vite": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "deploy": "VITE_BASE_PATH=/longscroll/ npm run build && gh-pages -d dist --dotfiles",
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "dompurify": "^3.2.6",
+    "express": "^4.21.2",
+    "html-to-image": "^1.11.13",
+    "lucide": "^0.468.0",
+    "markdown-it": "^14.1.0",
+    "playwright": "^1.51.1",
+    "sanitize-html": "^2.14.0",
+    "sharp": "^0.35.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "gh-pages": "^6.3.0",
+    "vite": "^6.1.0"
+  }
+}
