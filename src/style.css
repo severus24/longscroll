@@ -757,6 +757,18 @@ body.is-resizing * {
   border-color: var(--line);
 }
 
+.icon-action:disabled {
+  color: #b2b4af;
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.icon-action:disabled:hover {
+  color: #b2b4af;
+  background: transparent;
+  border-color: transparent;
+}
+
 .icon-action svg {
   width: 15px;
   height: 15px;

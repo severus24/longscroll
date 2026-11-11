@@ -27,6 +27,7 @@ import {
   RotateCcw,
   SeparatorHorizontal,
   Smartphone,
+  Trash2,
   Upload
 } from "lucide";
 import { sample } from "./sample.js";
@@ -109,6 +110,7 @@ const icons = {
   RotateCcw,
   SeparatorHorizontal,
   Smartphone,
+  Trash2,
   Upload
 };
 
@@ -299,6 +301,10 @@ app.innerHTML = `
               <i data-lucide="copy"></i>
               <span class="sr-only">复制 Markdown</span>
             </button>
+            <button class="icon-action" id="clearBtn" type="button" title="清空内容">
+              <i data-lucide="trash-2"></i>
+              <span class="sr-only">清空 Markdown 内容</span>
+            </button>
           </div>
         </header>
 
@@ -459,6 +465,7 @@ function syncControls() {
   $("#fontSizeValue").textContent = `${state.fontSize} px`;
   $("#lineHeightValue").textContent = Number(state.lineHeight).toFixed(2);
   $("#paragraphGapValue").textContent = `${state.paragraphGap} px`;
+  $("#clearBtn").disabled = !state.markdown.trim();
 
   $$("#modeSwitch button").forEach((button) => {
     const active = button.dataset.mode === state.mode;
@@ -826,6 +833,16 @@ $("#copyBtn").addEventListener("click", async () => {
   } catch {
     toast("无法访问剪贴板", "error");
   }
+});
+
+$("#clearBtn").addEventListener("click", () => {
+  if (!state.markdown.trim()) return;
+  if (!window.confirm("清空当前 Markdown 内容？此操作无法撤销。")) return;
+  editor.value = "";
+  state.markdown = "";
+  render();
+  editor.focus();
+  toast("内容已清空", "success");
 });
 
 $("#resetBtn").addEventListener("click", () => {
