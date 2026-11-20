@@ -925,6 +925,7 @@ $("#modeSwitch").addEventListener("click", (event) => {
   if (!button) return;
   state.mode = button.dataset.mode;
   syncControls();
+  updatePreviewMetrics();
   schedulePersist();
 });
 
@@ -956,6 +957,7 @@ function stepOutputWidth(delta) {
     clamp(state.outputWidth + delta, MIN_OUTPUT_WIDTH, MAX_OUTPUT_WIDTH)
   );
   syncControls();
+  updatePreviewMetrics();
   schedulePersist();
   $("#outputWidthInput").focus();
 }
