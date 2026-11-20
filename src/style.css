@@ -428,8 +428,8 @@ body.is-resizing * {
 .output-width-editor {
   display: inline-flex;
   align-items: center;
-  height: 36px;
-  padding: 0 4px;
+  height: 30px;
+  padding: 0 2px;
   background: #1c201c;
   border: 1px solid #697069;
   border-radius: 5px;
@@ -443,8 +443,8 @@ body.is-resizing * {
 .output-width-editor button {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 28px;
+  width: 23px;
+  height: 24px;
   padding: 0;
   color: #aeb4ae;
   background: transparent;
@@ -458,16 +458,16 @@ body.is-resizing * {
 }
 
 .output-width-editor button svg {
-  width: 15px;
-  height: 15px;
+  width: 12px;
+  height: 12px;
 }
 
 .output-width-editor input {
-  width: 72px;
+  width: 50px;
   padding: 0;
   color: #f3f5f0;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 15px;
+  font-size: 13px;
   text-align: right;
   caret-color: var(--accent);
   cursor: text;
@@ -484,10 +484,10 @@ body.is-resizing * {
 }
 
 .output-width-editor > span {
-  margin: 0 5px 0 3px;
+  margin: 0 2px;
   color: #9da39d;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 11px;
+  font-size: 9px;
 }
 
 .preview-output-facts i {

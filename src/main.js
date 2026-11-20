@@ -559,9 +559,7 @@ function updatePreviewMetrics() {
   requestAnimationFrame(() => {
     updateScale();
     const articleHeight = Math.max(0, previewPage.scrollHeight);
-    $("#previewMeta").textContent = state.mode === "fixed"
-      ? `${state.outputWidth.toLocaleString()} px · 高度自适应`
-      : `402 px · ${articleHeight.toLocaleString()} px`;
+    $("#previewMeta").textContent = `402 px · ${articleHeight.toLocaleString()} px`;
   });
 }
 
