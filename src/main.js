@@ -47,6 +47,9 @@ const DEFAULT_EDITOR_WIDTH = 600;
 const MIN_EDITOR_WIDTH = 420;
 const MIN_PREVIEW_WIDTH = 360;
 const SPLITTER_WIDTH = 9;
+const DEFAULT_OUTPUT_WIDTH = 1206;
+const MIN_OUTPUT_WIDTH = 480;
+const MAX_OUTPUT_WIDTH = 2400;
 const themes = new Set(["dark", "light", "paper", "blue"]);
 const modes = new Set(["device", "fixed"]);
 const formats = new Set(["png", "jpg"]);
@@ -73,6 +76,11 @@ const state = {
   theme: themes.has(saved.theme) ? saved.theme : "dark",
   mode: modes.has(saved.mode) ? saved.mode : "device",
   format: formats.has(saved.format) ? saved.format : "png",
+  outputWidth: clamp(
+    Number(saved.outputWidth) || DEFAULT_OUTPUT_WIDTH,
+    MIN_OUTPUT_WIDTH,
+    MAX_OUTPUT_WIDTH
+  ),
   fontSize: clamp(Number(saved.fontSize) || 16, 13, 22),
   lineHeight: clamp(Number(saved.lineHeight) || 1.75, 1.35, 2.1),
   paragraphGap: clamp(Number(saved.paragraphGap) || 22, 8, 40),
@@ -215,7 +223,23 @@ app.innerHTML = `
               <span class="eyebrow">PREVIEW</span>
               <h1>手机阅读预览</h1>
               <div class="preview-output-facts" aria-label="长图输出尺寸">
-                <span>输出宽度 <strong>1206 px</strong></span>
+                <span class="output-width-fact">
+                  输出宽度
+                  <strong id="outputWidthValue">${state.outputWidth} px</strong>
+                  <label class="output-width-editor" id="outputWidthEditor" hidden>
+                    <input
+                      id="outputWidthInput"
+                      type="number"
+                      min="${MIN_OUTPUT_WIDTH}"
+                      max="${MAX_OUTPUT_WIDTH}"
+                      step="1"
+                      value="${state.outputWidth}"
+                      inputmode="numeric"
+                      aria-label="固定模式的图片输出宽度"
+                    >
+                    <span>px</span>
+                  </label>
+                </span>
                 <i aria-hidden="true"></i>
                 <span>高度 <strong>自适应</strong></span>
               </div>
@@ -437,6 +461,7 @@ function persistState() {
       theme: state.theme,
       mode: state.mode,
       format: state.format,
+      outputWidth: state.outputWidth,
       fontSize: state.fontSize,
       lineHeight: state.lineHeight,
       paragraphGap: state.paragraphGap,
@@ -466,6 +491,10 @@ function syncControls() {
   $("#lineHeightValue").textContent = Number(state.lineHeight).toFixed(2);
   $("#paragraphGapValue").textContent = `${state.paragraphGap} px`;
   $("#clearBtn").disabled = !state.markdown.trim();
+  $("#outputWidthValue").textContent = `${state.outputWidth} px`;
+  $("#outputWidthInput").value = state.outputWidth;
+  $("#outputWidthValue").hidden = state.mode === "fixed";
+  $("#outputWidthEditor").hidden = state.mode !== "fixed";
 
   $$("#modeSwitch button").forEach((button) => {
     const active = button.dataset.mode === state.mode;
@@ -729,6 +758,30 @@ async function waitForPageImages(page) {
   }));
 }
 
+async function resizeImageBlob(blob, targetWidth, format) {
+  const bitmap = await createImageBitmap(blob);
+  const targetHeight = Math.max(
+    1,
+    Math.round(bitmap.height * (targetWidth / bitmap.width))
+  );
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+  const context = canvas.getContext("2d");
+  context.imageSmoothingEnabled = true;
+  context.imageSmoothingQuality = "high";
+  context.drawImage(bitmap, 0, 0, targetWidth, targetHeight);
+  bitmap.close();
+
+  const mimeType = format === "jpg" ? "image/jpeg" : "image/png";
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((resized) => {
+      if (resized) resolve(resized);
+      else reject(new Error("图片宽度调整失败"));
+    }, mimeType, 0.92);
+  });
+}
+
 async function exportInBrowser() {
   const exportPage = document.createElement("div");
   const content = DOMPurify.sanitize(md.render(state.markdown), {
@@ -766,7 +819,11 @@ async function exportInBrowser() {
     const dataUrl = state.format === "jpg"
       ? await toJpeg(exportPage, { ...options, quality: 0.92 })
       : await toPng(exportPage, options);
-    const blob = await (await fetch(dataUrl)).blob();
+    let blob = await (await fetch(dataUrl)).blob();
+    const targetWidth = state.mode === "fixed" ? state.outputWidth : DEFAULT_OUTPUT_WIDTH;
+    if (targetWidth !== DEFAULT_OUTPUT_WIDTH) {
+      blob = await resizeImageBlob(blob, targetWidth, state.format);
+    }
     downloadBlob(blob);
   } finally {
     exportPage.remove();
@@ -859,6 +916,26 @@ $("#modeSwitch").addEventListener("click", (event) => {
   state.mode = button.dataset.mode;
   syncControls();
   schedulePersist();
+});
+
+$("#outputWidthInput").addEventListener("input", (event) => {
+  const value = Number(event.target.value);
+  if (!Number.isFinite(value) || value < MIN_OUTPUT_WIDTH || value > MAX_OUTPUT_WIDTH) return;
+  state.outputWidth = Math.round(value);
+  $("#outputWidthValue").textContent = `${state.outputWidth} px`;
+  schedulePersist();
+});
+
+$("#outputWidthInput").addEventListener("change", (event) => {
+  state.outputWidth = Math.round(
+    clamp(Number(event.target.value) || DEFAULT_OUTPUT_WIDTH, MIN_OUTPUT_WIDTH, MAX_OUTPUT_WIDTH)
+  );
+  syncControls();
+  schedulePersist();
+});
+
+$("#outputWidthInput").addEventListener("keydown", (event) => {
+  if (event.key === "Enter") event.target.blur();
 });
 
 $("#formatSwitch").addEventListener("click", (event) => {
@@ -1027,7 +1104,8 @@ $("#exportBtn").addEventListener("click", async () => {
           lineHeight: state.lineHeight,
           paragraphGap: state.paragraphGap,
           mode: state.mode,
-          format: state.format
+          format: state.format,
+          outputWidth: state.outputWidth
         })
       });
 

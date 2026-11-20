@@ -22,7 +22,8 @@
 - 四套阅读主题
 - 字号、行高和段距调整
 - iPhone 16 Pro 模拟与固定尺寸模式
-- PNG / JPEG 导出，宽度固定为 1206 px
+- 固定模式支持 `480–2400 px` 自定义输出宽度，高度自适应
+- PNG / JPEG 导出
 - 本地版使用 Playwright 截图，支持长内容分段拼接
 - 静态版使用浏览器端导出，无需后端服务
 - 桌面端与移动端响应式布局
@@ -99,7 +100,8 @@ The desktop layout places the live reading preview on the left and the Markdown 
 - Four reading themes
 - Adjustable font size, line height, and paragraph spacing
 - iPhone 16 Pro simulation and fixed-width modes
-- PNG / JPEG export at 1206 px wide
+- Custom fixed-mode output width from `480–2400 px`, with automatic height
+- PNG / JPEG export
 - Playwright-powered local capture with long-content chunking
 - Browser-side export for the static site, with no backend required
 - Responsive desktop and mobile layouts

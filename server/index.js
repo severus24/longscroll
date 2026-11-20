@@ -159,7 +159,8 @@ app.post("/api/export", async (request, response) => {
       lineHeight = 1.75,
       paragraphGap = 22,
       mode = "device",
-      format = "png"
+      format = "png",
+      outputWidth = 1206
     } = request.body || {};
 
     if (!String(markdown).trim()) {
@@ -256,22 +257,32 @@ app.post("/api/export", async (request, response) => {
       .composite(chunks)
       .png()
       .toBuffer();
+    const capturedWidth = width * deviceScaleFactor;
+    const targetWidth = isDevice
+      ? capturedWidth
+      : Math.round(clamp(Number(outputWidth) || 1206, 480, 2400));
+    const scaledPngBuffer = targetWidth === capturedWidth
+      ? pngBuffer
+      : await sharp(pngBuffer).resize({ width: targetWidth }).png().toBuffer();
+    const outputHeight = Math.round(
+      totalHeight * deviceScaleFactor * (targetWidth / capturedWidth)
+    );
 
     const safeName = String(title || "longshot")
       .replace(/[\\/:*?"<>|]/g, "_")
       .slice(0, 60);
     const extension = format === "jpg" ? "jpg" : "png";
     const output = extension === "jpg"
-      ? await sharp(pngBuffer).jpeg({ quality: 92, mozjpeg: true }).toBuffer()
-      : pngBuffer;
+      ? await sharp(scaledPngBuffer).jpeg({ quality: 92, mozjpeg: true }).toBuffer()
+      : scaledPngBuffer;
 
     response.setHeader("Content-Type", extension === "jpg" ? "image/jpeg" : "image/png");
     response.setHeader(
       "Content-Disposition",
       `attachment; filename*=UTF-8''${encodeURIComponent(safeName)}.${extension}`
     );
-    response.setHeader("X-Image-Width", String(width * deviceScaleFactor));
-    response.setHeader("X-Image-Height", String(totalHeight * deviceScaleFactor));
+    response.setHeader("X-Image-Width", String(targetWidth));
+    response.setHeader("X-Image-Height", String(outputHeight));
     response.setHeader("X-Export-Mode", isDevice ? "iphone" : "fixed");
     response.send(output);
 
