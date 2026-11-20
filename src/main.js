@@ -47,9 +47,11 @@ const DEFAULT_EDITOR_WIDTH = 600;
 const MIN_EDITOR_WIDTH = 420;
 const MIN_PREVIEW_WIDTH = 360;
 const SPLITTER_WIDTH = 9;
-const DEFAULT_OUTPUT_WIDTH = 1206;
-const MIN_OUTPUT_WIDTH = 480;
-const MAX_OUTPUT_WIDTH = 2400;
+const DEVICE_RENDER_WIDTH = 440;
+const DEVICE_OUTPUT_WIDTH = 1200;
+const DEFAULT_RENDER_WIDTH = 800;
+const MIN_RENDER_WIDTH = 320;
+const MAX_RENDER_WIDTH = 2400;
 const themes = new Set(["dark", "light", "paper", "blue"]);
 const modes = new Set(["device", "fixed"]);
 const formats = new Set(["png", "jpg"]);
@@ -76,10 +78,10 @@ const state = {
   theme: themes.has(saved.theme) ? saved.theme : "dark",
   mode: modes.has(saved.mode) ? saved.mode : "device",
   format: formats.has(saved.format) ? saved.format : "png",
-  outputWidth: clamp(
-    Number(saved.outputWidth) || DEFAULT_OUTPUT_WIDTH,
-    MIN_OUTPUT_WIDTH,
-    MAX_OUTPUT_WIDTH
+  renderWidth: clamp(
+    Number(saved.renderWidth) || Number(saved.outputWidth) || DEFAULT_RENDER_WIDTH,
+    MIN_RENDER_WIDTH,
+    MAX_RENDER_WIDTH
   ),
   fontSize: clamp(Number(saved.fontSize) || 16, 13, 22),
   lineHeight: clamp(Number(saved.lineHeight) || 1.75, 1.35, 2.1),
@@ -134,6 +136,14 @@ function maxEditorWidth() {
     MIN_EDITOR_WIDTH,
     window.innerWidth - MIN_PREVIEW_WIDTH - SPLITTER_WIDTH
   );
+}
+
+function currentRenderWidth() {
+  return state.mode === "fixed" ? state.renderWidth : DEVICE_RENDER_WIDTH;
+}
+
+function currentOutputWidth() {
+  return state.mode === "fixed" ? state.renderWidth : DEVICE_OUTPUT_WIDTH;
 }
 
 function escapeHtml(value) {
@@ -223,33 +233,7 @@ app.innerHTML = `
               <span class="eyebrow">PREVIEW</span>
               <h1>手机阅读预览</h1>
               <div class="preview-output-facts" aria-label="长图输出尺寸">
-                <span class="output-width-fact">
-                  输出宽度
-                  <strong id="outputWidthValue">${state.outputWidth} px</strong>
-                  <div class="output-width-editor" id="outputWidthEditor" hidden>
-                    <button id="outputWidthDecrease" type="button" title="减少 60 px">
-                      <i data-lucide="minus"></i>
-                      <span class="sr-only">减少输出宽度</span>
-                    </button>
-                    <input
-                      id="outputWidthInput"
-                      type="text"
-                      min="${MIN_OUTPUT_WIDTH}"
-                      max="${MAX_OUTPUT_WIDTH}"
-                      pattern="[0-9]*"
-                      value="${state.outputWidth}"
-                      inputmode="numeric"
-                      autocomplete="off"
-                      spellcheck="false"
-                      aria-label="固定模式的图片输出宽度"
-                    >
-                    <span>px</span>
-                    <button id="outputWidthIncrease" type="button" title="增加 60 px">
-                      <i data-lucide="plus"></i>
-                      <span class="sr-only">增加输出宽度</span>
-                    </button>
-                  </div>
-                </span>
+                <span>输出宽度 <strong id="outputWidthValue">1200 px</strong></span>
                 <i aria-hidden="true"></i>
                 <span>高度 <strong>自适应</strong></span>
               </div>
@@ -257,13 +241,31 @@ app.innerHTML = `
           </div>
 
           <div class="preview-actions">
-            <div class="segmented mode-switch" id="modeSwitch" aria-label="渲染模式">
-              <button class="active" data-mode="device" type="button">
-                <i data-lucide="smartphone"></i><span>iPhone</span>
-              </button>
-              <button data-mode="fixed" type="button">
-                <i data-lucide="monitor"></i><span>固定</span>
-              </button>
+            <div class="mode-stack">
+              <div class="segmented mode-switch" id="modeSwitch" aria-label="渲染模式">
+                <button class="active" data-mode="device" type="button">
+                  <i data-lucide="smartphone"></i><span>iPhone</span>
+                </button>
+                <button data-mode="fixed" type="button">
+                  <i data-lucide="monitor"></i><span>固定</span>
+                </button>
+              </div>
+              <label class="render-width-control" id="renderWidthControl" hidden>
+                <span>实时渲染宽度</span>
+                <span class="render-width-input">
+                  <input
+                    id="renderWidthInput"
+                    type="text"
+                    pattern="[0-9]*"
+                    value="${state.renderWidth}"
+                    inputmode="numeric"
+                    autocomplete="off"
+                    spellcheck="false"
+                    aria-label="固定模式的实时渲染宽度"
+                  >
+                  <span>px</span>
+                </span>
+              </label>
             </div>
 
             <div class="zoom-control" aria-label="预览缩放">
@@ -279,7 +281,7 @@ app.innerHTML = `
           <div class="preview-artboard">
             <div class="preview-caption" id="previewCaption">
               <span class="live-state"><i></i> 实时排版</span>
-              <span id="previewMeta">402 px · 正在计算高度</span>
+              <span id="previewMeta">440 px · 正在计算高度</span>
             </div>
 
             <div class="phone-scale" id="phoneScale">
@@ -471,7 +473,7 @@ function persistState() {
       theme: state.theme,
       mode: state.mode,
       format: state.format,
-      outputWidth: state.outputWidth,
+      renderWidth: state.renderWidth,
       fontSize: state.fontSize,
       lineHeight: state.lineHeight,
       paragraphGap: state.paragraphGap,
@@ -501,10 +503,10 @@ function syncControls() {
   $("#lineHeightValue").textContent = Number(state.lineHeight).toFixed(2);
   $("#paragraphGapValue").textContent = `${state.paragraphGap} px`;
   $("#clearBtn").disabled = !state.markdown.trim();
-  $("#outputWidthValue").textContent = `${state.outputWidth} px`;
-  $("#outputWidthInput").value = state.outputWidth;
-  $("#outputWidthValue").hidden = state.mode === "fixed";
-  $("#outputWidthEditor").hidden = state.mode !== "fixed";
+  $("#outputWidthValue").textContent = `${currentOutputWidth().toLocaleString()} px`;
+  $("#renderWidthInput").value = state.renderWidth;
+  $("#renderWidthControl").hidden = state.mode !== "fixed";
+  previewDevice.style.setProperty("--render-width", `${currentRenderWidth()}px`);
 
   $$("#modeSwitch button").forEach((button) => {
     const active = button.dataset.mode === state.mode;
@@ -543,10 +545,14 @@ function applyEditorWidth(value, persist = false) {
 }
 
 function updateScale() {
-  const displayZoom = window.innerWidth <= 860
-    ? Math.min(state.zoom, clamp((previewScroller.clientWidth - 24) / 418, 0.5, 1))
-    : state.zoom;
-  const deviceWidth = 418;
+  const fitZoom = clamp(
+    (previewScroller.clientWidth - (window.innerWidth <= 860 ? 24 : 48)) /
+      (currentRenderWidth() + 18),
+    0.15,
+    1
+  );
+  const displayZoom = Math.min(state.zoom, fitZoom);
+  const deviceWidth = currentRenderWidth() + 18;
   const deviceHeight = previewDevice.offsetHeight;
   phoneScale.style.width = `${Math.round(deviceWidth * displayZoom)}px`;
   phoneScale.style.height = `${Math.round(deviceHeight * displayZoom)}px`;
@@ -556,10 +562,11 @@ function updateScale() {
 }
 
 function updatePreviewMetrics() {
+  previewDevice.style.setProperty("--render-width", `${currentRenderWidth()}px`);
   requestAnimationFrame(() => {
     updateScale();
     const articleHeight = Math.max(0, previewPage.scrollHeight);
-    $("#previewMeta").textContent = `402 px · ${articleHeight.toLocaleString()} px`;
+    $("#previewMeta").textContent = `${currentRenderWidth().toLocaleString()} px · ${articleHeight.toLocaleString()} px`;
   });
 }
 
@@ -696,7 +703,7 @@ function setMobileView(view) {
 
 function fitPreview() {
   const available = Math.max(240, previewScroller.clientWidth - 54);
-  state.zoom = clamp(available / 430, 0.5, 1);
+  state.zoom = clamp(available / (currentRenderWidth() + 18), 0.15, 1);
   updateScale();
   schedulePersist();
 }
@@ -800,6 +807,8 @@ async function exportInBrowser() {
   });
 
   exportPage.className = `article client-export-page theme-${state.theme}`;
+  const layoutWidth = currentRenderWidth();
+  exportPage.style.width = `${layoutWidth}px`;
   exportPage.style.setProperty("--font-size", `${state.fontSize}px`);
   exportPage.style.setProperty("--line-height", state.lineHeight);
   exportPage.style.setProperty("--paragraph-gap", `${state.paragraphGap}px`);
@@ -809,7 +818,7 @@ async function exportInBrowser() {
   try {
     await document.fonts?.ready;
     await waitForPageImages(exportPage);
-    const width = 402;
+    const width = layoutWidth;
     const height = Math.max(1, exportPage.scrollHeight);
     const options = {
       width,
@@ -830,8 +839,8 @@ async function exportInBrowser() {
       ? await toJpeg(exportPage, { ...options, quality: 0.92 })
       : await toPng(exportPage, options);
     let blob = await (await fetch(dataUrl)).blob();
-    const targetWidth = state.mode === "fixed" ? state.outputWidth : DEFAULT_OUTPUT_WIDTH;
-    if (targetWidth !== DEFAULT_OUTPUT_WIDTH) {
+    const targetWidth = currentOutputWidth();
+    if (targetWidth !== width * 3) {
       blob = await resizeImageBlob(blob, targetWidth, state.format);
     }
     downloadBlob(blob);
@@ -929,43 +938,31 @@ $("#modeSwitch").addEventListener("click", (event) => {
   schedulePersist();
 });
 
-$("#outputWidthInput").addEventListener("input", (event) => {
+$("#renderWidthInput").addEventListener("input", (event) => {
   const digits = event.target.value.replace(/\D/g, "");
   if (digits !== event.target.value) event.target.value = digits;
   const value = Number(digits);
-  if (!Number.isFinite(value) || value < MIN_OUTPUT_WIDTH || value > MAX_OUTPUT_WIDTH) return;
-  state.outputWidth = Math.round(value);
-  $("#outputWidthValue").textContent = `${state.outputWidth} px`;
+  if (!Number.isFinite(value) || value < MIN_RENDER_WIDTH || value > MAX_RENDER_WIDTH) return;
+  state.renderWidth = Math.round(value);
+  $("#outputWidthValue").textContent = `${state.renderWidth.toLocaleString()} px`;
   updatePreviewMetrics();
   schedulePersist();
 });
 
-$("#outputWidthInput").addEventListener("click", (event) => {
+$("#renderWidthInput").addEventListener("click", (event) => {
   event.target.select();
 });
 
-$("#outputWidthInput").addEventListener("change", (event) => {
-  state.outputWidth = Math.round(
-    clamp(Number(event.target.value) || DEFAULT_OUTPUT_WIDTH, MIN_OUTPUT_WIDTH, MAX_OUTPUT_WIDTH)
-  );
-  syncControls();
-  schedulePersist();
-});
-
-function stepOutputWidth(delta) {
-  state.outputWidth = Math.round(
-    clamp(state.outputWidth + delta, MIN_OUTPUT_WIDTH, MAX_OUTPUT_WIDTH)
+$("#renderWidthInput").addEventListener("change", (event) => {
+  state.renderWidth = Math.round(
+    clamp(Number(event.target.value) || DEFAULT_RENDER_WIDTH, MIN_RENDER_WIDTH, MAX_RENDER_WIDTH)
   );
   syncControls();
   updatePreviewMetrics();
   schedulePersist();
-  $("#outputWidthInput").focus();
-}
+});
 
-$("#outputWidthDecrease").addEventListener("click", () => stepOutputWidth(-60));
-$("#outputWidthIncrease").addEventListener("click", () => stepOutputWidth(60));
-
-$("#outputWidthInput").addEventListener("keydown", (event) => {
+$("#renderWidthInput").addEventListener("keydown", (event) => {
   if (event.key === "Enter") event.target.blur();
 });
 
@@ -1136,7 +1133,7 @@ $("#exportBtn").addEventListener("click", async () => {
           paragraphGap: state.paragraphGap,
           mode: state.mode,
           format: state.format,
-          outputWidth: state.outputWidth
+          renderWidth: currentRenderWidth()
         })
       });
 

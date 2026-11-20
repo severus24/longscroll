@@ -21,8 +21,8 @@
 - 支持本地图片上传、粘贴和拖放
 - 四套阅读主题
 - 字号、行高和段距调整
-- iPhone 16 Pro 模拟与固定尺寸模式
-- 固定模式支持 `480–2400 px` 自定义输出宽度，高度自适应
+- iPhone 16 Pro Max 模拟：`440 × 956` 视口，输出宽度 `1200 px`
+- 固定模式支持 `320–2400 px` 自定义实时渲染宽度，高度自适应
 - PNG / JPEG 导出
 - 本地版使用 Playwright 截图，支持长内容分段拼接
 - 静态版使用浏览器端导出，无需后端服务
@@ -99,8 +99,8 @@ The desktop layout places the live reading preview on the left and the Markdown 
 - Upload, paste, and drag local images
 - Four reading themes
 - Adjustable font size, line height, and paragraph spacing
-- iPhone 16 Pro simulation and fixed-width modes
-- Custom fixed-mode output width from `480–2400 px`, with automatic height
+- iPhone 16 Pro Max simulation with a `440 × 956` viewport and `1200 px` output
+- Custom fixed-mode render width from `320–2400 px`, with automatic height
 - PNG / JPEG export
 - Playwright-powered local capture with long-content chunking
 - Browser-side export for the static site, with no backend required

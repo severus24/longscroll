@@ -97,7 +97,8 @@ function buildDocument({
   theme = "dark",
   fontSize = 16,
   lineHeight = 1.75,
-  paragraphGap = 22
+  paragraphGap = 22,
+  renderWidth = 440
 }) {
   const rendered = md.render(String(markdown || ""));
   const content = sanitizeHtml(rendered, {
@@ -111,6 +112,7 @@ function buildDocument({
   const size = clamp(Number(fontSize) || 16, 13, 22);
   const leading = clamp(Number(lineHeight) || 1.75, 1.35, 2.1);
   const gap = clamp(Number(paragraphGap) || 22, 8, 40);
+  const layoutWidth = Math.round(clamp(Number(renderWidth) || 440, 320, 2400));
 
   return `<!doctype html>
 <html lang="zh-CN">
@@ -132,8 +134,8 @@ function buildDocument({
         --paragraph-gap:${gap}px;
       }
       html,body{margin:0;padding:0;width:100%;background:var(--bg);color:var(--fg);-webkit-text-size-adjust:100%}
-      body{width:402px;overflow-x:hidden}
-      .article{width:402px;min-height:100vh;margin:0 auto;padding:32px 20px 64px}
+      body{width:${layoutWidth}px;overflow-x:hidden}
+      .article{width:${layoutWidth}px;min-height:100vh;margin:0 auto;padding:32px 20px 64px}
       ${articleCss}
     </style>
   </head>
@@ -160,7 +162,7 @@ app.post("/api/export", async (request, response) => {
       paragraphGap = 22,
       mode = "device",
       format = "png",
-      outputWidth = 1206
+      renderWidth = 440
     } = request.body || {};
 
     if (!String(markdown).trim()) {
@@ -168,17 +170,21 @@ app.post("/api/export", async (request, response) => {
       return;
     }
 
+    const isDevice = mode === "device";
+    const layoutWidth = Math.round(
+      clamp(isDevice ? 440 : Number(renderWidth) || 800, 320, 2400)
+    );
     const html = buildDocument({
       markdown,
       title,
       theme,
       fontSize,
       lineHeight,
-      paragraphGap
+      paragraphGap,
+      renderWidth: layoutWidth
     });
-    const isDevice = mode === "device";
-    const width = 402;
-    const viewportHeight = 874;
+    const width = layoutWidth;
+    const viewportHeight = 956;
     const deviceScaleFactor = 3;
 
     browser = await chromium.launch({
@@ -258,9 +264,7 @@ app.post("/api/export", async (request, response) => {
       .png()
       .toBuffer();
     const capturedWidth = width * deviceScaleFactor;
-    const targetWidth = isDevice
-      ? capturedWidth
-      : Math.round(clamp(Number(outputWidth) || 1206, 480, 2400));
+    const targetWidth = isDevice ? 1200 : layoutWidth;
     const scaledPngBuffer = targetWidth === capturedWidth
       ? pngBuffer
       : await sharp(pngBuffer).resize({ width: targetWidth }).png().toBuffer();
