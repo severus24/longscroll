@@ -428,25 +428,49 @@ body.is-resizing * {
 .output-width-editor {
   display: inline-flex;
   align-items: center;
-  height: 28px;
-  padding: 0 8px;
-  background: #0c0f0c;
-  border: 1px solid #505650;
+  height: 36px;
+  padding: 0 4px;
+  background: #1c201c;
+  border: 1px solid #697069;
   border-radius: 5px;
 }
 
 .output-width-editor:focus-within {
-  border-color: #8f9890;
-  box-shadow: 0 0 0 2px rgb(143 152 144 / 12%);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgb(233 94 63 / 20%);
+}
+
+.output-width-editor button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  color: #aeb4ae;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+}
+
+.output-width-editor button:hover {
+  color: #fff;
+  background: #303630;
+}
+
+.output-width-editor button svg {
+  width: 15px;
+  height: 15px;
 }
 
 .output-width-editor input {
-  width: 62px;
+  width: 72px;
   padding: 0;
   color: #f3f5f0;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 13px;
+  font-size: 15px;
   text-align: right;
+  caret-color: var(--accent);
+  cursor: text;
   background: transparent;
   border: 0;
   outline: 0;
@@ -460,10 +484,10 @@ body.is-resizing * {
 }
 
 .output-width-editor > span {
-  margin-left: 3px;
+  margin: 0 5px 0 3px;
   color: #9da39d;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .preview-output-facts i {

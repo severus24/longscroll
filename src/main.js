@@ -226,19 +226,29 @@ app.innerHTML = `
                 <span class="output-width-fact">
                   输出宽度
                   <strong id="outputWidthValue">${state.outputWidth} px</strong>
-                  <label class="output-width-editor" id="outputWidthEditor" hidden>
+                  <div class="output-width-editor" id="outputWidthEditor" hidden>
+                    <button id="outputWidthDecrease" type="button" title="减少 60 px">
+                      <i data-lucide="minus"></i>
+                      <span class="sr-only">减少输出宽度</span>
+                    </button>
                     <input
                       id="outputWidthInput"
-                      type="number"
+                      type="text"
                       min="${MIN_OUTPUT_WIDTH}"
                       max="${MAX_OUTPUT_WIDTH}"
-                      step="1"
+                      pattern="[0-9]*"
                       value="${state.outputWidth}"
                       inputmode="numeric"
+                      autocomplete="off"
+                      spellcheck="false"
                       aria-label="固定模式的图片输出宽度"
                     >
                     <span>px</span>
-                  </label>
+                    <button id="outputWidthIncrease" type="button" title="增加 60 px">
+                      <i data-lucide="plus"></i>
+                      <span class="sr-only">增加输出宽度</span>
+                    </button>
+                  </div>
                 </span>
                 <i aria-hidden="true"></i>
                 <span>高度 <strong>自适应</strong></span>
@@ -549,7 +559,9 @@ function updatePreviewMetrics() {
   requestAnimationFrame(() => {
     updateScale();
     const articleHeight = Math.max(0, previewPage.scrollHeight);
-    $("#previewMeta").textContent = `402 px · ${articleHeight.toLocaleString()} px`;
+    $("#previewMeta").textContent = state.mode === "fixed"
+      ? `${state.outputWidth.toLocaleString()} px · 高度自适应`
+      : `402 px · ${articleHeight.toLocaleString()} px`;
   });
 }
 
@@ -919,11 +931,18 @@ $("#modeSwitch").addEventListener("click", (event) => {
 });
 
 $("#outputWidthInput").addEventListener("input", (event) => {
-  const value = Number(event.target.value);
+  const digits = event.target.value.replace(/\D/g, "");
+  if (digits !== event.target.value) event.target.value = digits;
+  const value = Number(digits);
   if (!Number.isFinite(value) || value < MIN_OUTPUT_WIDTH || value > MAX_OUTPUT_WIDTH) return;
   state.outputWidth = Math.round(value);
   $("#outputWidthValue").textContent = `${state.outputWidth} px`;
+  updatePreviewMetrics();
   schedulePersist();
+});
+
+$("#outputWidthInput").addEventListener("click", (event) => {
+  event.target.select();
 });
 
 $("#outputWidthInput").addEventListener("change", (event) => {
@@ -933,6 +952,18 @@ $("#outputWidthInput").addEventListener("change", (event) => {
   syncControls();
   schedulePersist();
 });
+
+function stepOutputWidth(delta) {
+  state.outputWidth = Math.round(
+    clamp(state.outputWidth + delta, MIN_OUTPUT_WIDTH, MAX_OUTPUT_WIDTH)
+  );
+  syncControls();
+  schedulePersist();
+  $("#outputWidthInput").focus();
+}
+
+$("#outputWidthDecrease").addEventListener("click", () => stepOutputWidth(-60));
+$("#outputWidthIncrease").addEventListener("click", () => stepOutputWidth(60));
 
 $("#outputWidthInput").addEventListener("keydown", (event) => {
   if (event.key === "Enter") event.target.blur();
